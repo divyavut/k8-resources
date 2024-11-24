@@ -1,0 +1,49 @@
+# create service account is a identity for pods(non human)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: secret-reader
+  namespace: expense
+
+---
+# create role(permission) using RBAC(authorisation)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: expense
+  name: secret-reader
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"] 
+
+---
+# binding role and user is called role binding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: secret-reader
+  namespace: expense
+subjects:
+# You can specify more than one "subject"
+- kind: ServiceAccount
+  name: secret-reader # "name" is case sensitive
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  # "roleRef" specifies the binding to a Role / ClusterRole
+  kind: Role #this must be Role or ClusterRole
+  name: secret-reader # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: pod 
+  namespace: expense
+spec:  
+  # mention serviceaccountname in pod spec 
+  serviceAccountName: secret-reader
+  containers: 
+  - name: nginx01
+    image: nginx
